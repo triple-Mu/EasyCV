@@ -23,7 +23,7 @@ class YOLOXHead_Template(nn.Module):
         'l': [1.0, 1.0],
         'x': [1.33, 1.25]
     }
-
+    export = False
     def __init__(self,
                  num_classes=80,
                  model_type='s',
@@ -228,9 +228,14 @@ class YOLOXHead_Template(nn.Module):
 
         grids = torch.cat(grids, dim=1).type(dtype)
         strides = torch.cat(strides, dim=1).type(dtype)
-
-        outputs[..., :2] = (outputs[..., :2] + grids) * strides
-        outputs[..., 2:4] = torch.exp(outputs[..., 2:4]) * strides
+        if self.export:
+            xy, wh, others = outputs.split((2, 2, self.num_classes + 1), 2)
+            xy = (xy + grids) * strides
+            wh = torch.exp(wh) * strides
+            outputs = torch.cat([xy, wh, others], 2)
+        else:
+            outputs[..., :2] = (outputs[..., :2] + grids) * strides
+            outputs[..., 2:4] = torch.exp(outputs[..., 2:4]) * strides
         return outputs
 
     def get_losses(

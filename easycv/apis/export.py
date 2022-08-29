@@ -11,7 +11,7 @@ import torch
 import torchvision
 import torchvision.transforms.functional as t_f
 from mmcv.utils import Config
-
+from io import BytesIO
 from easycv.file import io
 from easycv.models import (DINO, MOCO, SWAV, YOLOX, Classification, MoBY,
                            build_model)
@@ -165,7 +165,7 @@ def _export_yolox(model, cfg, filename):
 
     if hasattr(cfg, 'export'):
         export_type = getattr(cfg.export, 'export_type', 'raw')
-        default_export_type_list = ['raw', 'jit', 'blade']
+        default_export_type_list = ['raw', 'jit', 'blade', 'onnx']
         if export_type not in default_export_type_list:
             logging.warning(
                 'YOLOX-PAI only supports the export type as  [raw,jit,blade], otherwise we use ori as default'
@@ -231,16 +231,21 @@ def _export_yolox(model, cfg, filename):
             model.eval()
             model.to(device)
 
-            model_export = ModelExportWrapper(
-                model,
-                input.to(device),
-                trace_model=True,
-            )
+            if export_type == 'onnx':
+                model_export = model
+                yolox_trace = None
 
-            model_export.eval().to(device)
+            else:
+                model_export = ModelExportWrapper(
+                    model,
+                    input.to(device),
+                    trace_model=True,
+                )
 
-            # trace model
-            yolox_trace = torch.jit.trace(model_export, input.to(device))
+                model_export.eval().to(device)
+
+                # trace model
+                yolox_trace = torch.jit.trace(model_export, input.to(device))
 
             # save export model
             if export_type == 'blade':
@@ -270,7 +275,7 @@ def _export_yolox(model, cfg, filename):
 
                     json.dump(config, ofile)
 
-            if export_type == 'jit':
+            elif export_type == 'jit':
                 with io.open(filename + '.jit', 'wb') as ofile:
                     torch.jit.save(yolox_trace, ofile)
 
@@ -282,6 +287,24 @@ def _export_yolox(model, cfg, filename):
                         classes=cfg.CLASSES)
 
                     json.dump(config, ofile)
+            elif export_type == 'onnx':
+                # with io.open(filename + '.onnx', 'wb') as ofile:
+                with BytesIO() as ofile:
+                    torch.onnx.export(model_export, input.to(device), ofile,
+                                      input_names=['images'], output_names=['outputs'], opset_version=11)
+                    ofile.seek(0)
+                    try:
+                        import onnx
+                        import onnxsim
+                        onnx_model = onnx.load(ofile)  # load onnx model
+                        onnx.checker.check_model(onnx_model)  # check onnx model
+                        onnx_model, check = onnxsim.simplify(onnx_model)
+                        assert check, 'assert check failed'
+                    except Exception as e:
+                        print(e)
+                    else:
+                        onnx.save(onnx_model,filename+'.onnx')
+
 
             # save export preprocess/postprocess
             if save_preprocess_jit:

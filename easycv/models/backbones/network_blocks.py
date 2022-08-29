@@ -254,7 +254,7 @@ class CSPLayer(nn.Module):
 
 class Focus(nn.Module):
     """Focus width and height information into channel space."""
-
+    export = False
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -264,22 +264,34 @@ class Focus(nn.Module):
         super().__init__()
         self.conv = BaseConv(
             in_channels * 4, out_channels, ksize, stride, act=act)
+        self.register_buffer("gconv1", torch.tensor([[1., 0.], [0., 0.]]).expand(in_channels, 1, 2, 2))
+        self.register_buffer("gconv2", torch.tensor([[0., 0.], [1., 0.]]).expand(in_channels, 1, 2, 2))
+        self.register_buffer("gconv3", torch.tensor([[0., 1.], [0., 0.]]).expand(in_channels, 1, 2, 2))
+        self.register_buffer("gconv4", torch.tensor([[0., 0.], [0., 1.]]).expand(in_channels, 1, 2, 2))
+        self.groups = in_channels
 
     def forward(self, x):
         # shape of x (b,c,w,h) -> y(b,4c,w/2,h/2)
-        patch_top_left = x[..., ::2, ::2]
-        patch_top_right = x[..., ::2, 1::2]
-        patch_bot_left = x[..., 1::2, ::2]
-        patch_bot_right = x[..., 1::2, 1::2]
-        x = torch.cat(
-            (
-                patch_top_left,
-                patch_bot_left,
-                patch_top_right,
-                patch_bot_right,
-            ),
-            dim=1,
-        )
+        if self.export:
+            conv1 = nn.functional.conv2d(x, self.gconv1, stride=2, groups=self.groups)
+            conv2 = nn.functional.conv2d(x, self.gconv2, stride=2, groups=self.groups)
+            conv3 = nn.functional.conv2d(x, self.gconv3, stride=2, groups=self.groups)
+            conv4 = nn.functional.conv2d(x, self.gconv4, stride=2, groups=self.groups)
+            x = torch.cat([conv1, conv2, conv3, conv4], dim=1)
+        else:
+            patch_top_left = x[..., ::2, ::2]
+            patch_top_right = x[..., ::2, 1::2]
+            patch_bot_left = x[..., 1::2, ::2]
+            patch_bot_right = x[..., 1::2, 1::2]
+            x = torch.cat(
+                (
+                    patch_top_left,
+                    patch_bot_left,
+                    patch_top_right,
+                    patch_bot_right,
+                ),
+                dim=1,
+            )
         return self.conv(x)
 
 

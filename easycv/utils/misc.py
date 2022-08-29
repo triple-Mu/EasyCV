@@ -7,6 +7,8 @@ import numpy as np
 from six.moves import map, zip
 
 from easycv.models.backbones.repvgg_yolox_backbone import RepVGGBlock
+from easycv.models.backbones.network_blocks import Focus
+from easycv.models.detection.detectors.yolox.yolo_head_template import YOLOXHead_Template
 
 
 def tensor2imgs(tensor, mean=(0, 0, 0), std=(1, 1, 1), to_rgb=True):
@@ -84,6 +86,10 @@ def reparameterize_models(model):
         if isinstance(layer, RepVGGBlock):
             reparameterize_count += 1
             layer.switch_to_deploy()
+        elif isinstance(layer, Focus):
+            layer.export = True
+        elif isinstance(layer,YOLOXHead_Template):
+            layer.export = True
     logging.info(
         'export : PAI-export reparameterize_count(RepVGGBlock, ) switch to deploy with {} blocks'
         .format(reparameterize_count))
