@@ -1,7 +1,8 @@
-CLASSES = ['Bacillariophyta', 'Chlorella', 'Chrysophyta',
-           'Dunaliella_salina', 'Platymonas', 'translating_Symbiodinium',
-           'bleaching_Symbiodinium', 'normal_Symbiodinium']
-
+CLASSES = [
+    'Bacillariophyta', 'Chlorella', 'Chrysophyta', 'Dunaliella_salina',
+    'Platymonas', 'translating_Symbiodinium', 'bleaching_Symbiodinium',
+    'normal_Symbiodinium'
+]
 
 img_scale = [(1280, 1920), (1344, 1920), (1408, 1920), (1472, 1920),
              (1536, 1920), (1600, 1920), (1664, 1920), (1728, 1920),
@@ -81,7 +82,7 @@ train_dataset = dict(
     data_source=dict(
         type='DetSourceCoco',
         ann_file=data_root + 'annotations/train2017.json',
-        img_prefix=data_root + 'train2017/',
+        img_prefix=data_root + 'train2017',
         pipeline=[
             dict(type='LoadImageFromFile'),
             dict(type='LoadAnnotations', with_bbox=True)
@@ -97,8 +98,8 @@ val_dataset = dict(
     imgs_per_gpu=1,
     data_source=dict(
         type='DetSourceCoco',
-        ann_file=data_root + 'annotations/val2017.json',
-        img_prefix=data_root + 'val2017/',
+        ann_file=data_root + 'annotations/train2017.json',
+        img_prefix=data_root + 'train2017',
         pipeline=[
             dict(type='LoadImageFromFile'),
             dict(type='LoadAnnotations', with_bbox=True)
@@ -111,7 +112,7 @@ val_dataset = dict(
 
 data = dict(
     imgs_per_gpu=1,
-    workers_per_gpu=0,
+    workers_per_gpu=4,
     train=train_dataset,
     val=val_dataset,
     drop_last=True)
