@@ -1,18 +1,11 @@
-CLASSES = [
-    'person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train',
-    'truck', 'boat', 'traffic light', 'fire hydrant', 'stop sign',
-    'parking meter', 'bench', 'bird', 'cat', 'dog', 'horse', 'sheep', 'cow',
-    'elephant', 'bear', 'zebra', 'giraffe', 'backpack', 'umbrella', 'handbag',
-    'tie', 'suitcase', 'frisbee', 'skis', 'snowboard', 'sports ball', 'kite',
-    'baseball bat', 'baseball glove', 'skateboard', 'surfboard',
-    'tennis racket', 'bottle', 'wine glass', 'cup', 'fork', 'knife', 'spoon',
-    'bowl', 'banana', 'apple', 'sandwich', 'orange', 'broccoli', 'carrot',
-    'hot dog', 'pizza', 'donut', 'cake', 'chair', 'couch', 'potted plant',
-    'bed', 'dining table', 'toilet', 'tv', 'laptop', 'mouse', 'remote',
-    'keyboard', 'cell phone', 'microwave', 'oven', 'toaster', 'sink',
-    'refrigerator', 'book', 'clock', 'vase', 'scissors', 'teddy bear',
-    'hair drier', 'toothbrush'
-]
+CLASSES = ['Bacillariophyta', 'Chlorella', 'Chrysophyta',
+           'Dunaliella_salina', 'Platymonas', 'translating_Symbiodinium',
+           'bleaching_Symbiodinium', 'normal_Symbiodinium']
+
+
+img_scale = [(1280, 1920), (1344, 1920), (1408, 1920), (1472, 1920),
+             (1536, 1920), (1600, 1920), (1664, 1920), (1728, 1920),
+             (1792, 1920), (1856, 1920)]
 
 # dataset settings
 data_root = 'data/coco/'
@@ -27,10 +20,7 @@ train_pipeline = [
             [
                 dict(
                     type='MMResize',
-                    img_scale=[(480, 1333), (512, 1333), (544, 1333),
-                               (576, 1333), (608, 1333), (640, 1333),
-                               (672, 1333), (704, 1333), (736, 1333),
-                               (768, 1333), (800, 1333)],
+                    img_scale=img_scale,
                     multiscale_mode='value',
                     keep_ratio=True)
             ],
@@ -39,20 +29,17 @@ train_pipeline = [
                     type='MMResize',
                     # The radio of all image in train dataset < 7
                     # follow the original impl
-                    img_scale=[(400, 4200), (500, 4200), (600, 4200)],
+                    img_scale=[(1280, 2880), (1600, 2880), (1920, 2880)],
                     multiscale_mode='value',
                     keep_ratio=True),
                 dict(
                     type='MMRandomCrop',
                     crop_type='absolute_range',
-                    crop_size=(384, 600),
+                    crop_size=(1536, 1728),
                     allow_negative_crop=True),
                 dict(
                     type='MMResize',
-                    img_scale=[(480, 1333), (512, 1333), (544, 1333),
-                               (576, 1333), (608, 1333), (640, 1333),
-                               (672, 1333), (704, 1333), (736, 1333),
-                               (768, 1333), (800, 1333)],
+                    img_scale=img_scale,
                     multiscale_mode='value',
                     override=True,
                     keep_ratio=True)
@@ -71,7 +58,7 @@ train_pipeline = [
 test_pipeline = [
     dict(
         type='MMMultiScaleFlipAug',
-        img_scale=(1333, 800),
+        img_scale=(1600, 1600),
         flip=False,
         transforms=[
             dict(type='MMResize', keep_ratio=True),
@@ -93,7 +80,7 @@ train_dataset = dict(
     type='DetDataset',
     data_source=dict(
         type='DetSourceCoco',
-        ann_file=data_root + 'annotations/instances_train2017.json',
+        ann_file=data_root + 'annotations/train2017.json',
         img_prefix=data_root + 'train2017/',
         pipeline=[
             dict(type='LoadImageFromFile'),
@@ -110,7 +97,7 @@ val_dataset = dict(
     imgs_per_gpu=1,
     data_source=dict(
         type='DetSourceCoco',
-        ann_file=data_root + 'annotations/instances_val2017.json',
+        ann_file=data_root + 'annotations/val2017.json',
         img_prefix=data_root + 'val2017/',
         pipeline=[
             dict(type='LoadImageFromFile'),
@@ -123,8 +110,8 @@ val_dataset = dict(
     pipeline=test_pipeline)
 
 data = dict(
-    imgs_per_gpu=2,
-    workers_per_gpu=2,
+    imgs_per_gpu=1,
+    workers_per_gpu=0,
     train=train_dataset,
     val=val_dataset,
     drop_last=True)

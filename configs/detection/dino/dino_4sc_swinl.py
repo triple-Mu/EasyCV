@@ -1,8 +1,8 @@
 # model settings
 model = dict(
     type='Detection',
-    pretrained=
-    'https://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com/EasyCV/modelzoo/classification/timm/swint/warpper_swin_large_patch4_window12_384_22k.pth',
+    pretrained= None,
+    # 'https://pai-vision-data-hz.oss-cn-zhangjiakou.aliyuncs.com/EasyCV/modelzoo/classification/timm/swint/warpper_swin_large_patch4_window12_384_22k.pth',
     backbone=dict(
         type='SwinTransformer',
         pretrain_img_size=384,
@@ -65,9 +65,9 @@ model = dict(
             dn_number=100,
             dn_label_noise_ratio=0.5,  # paper 0.5, release code 0.25
             dn_box_noise_scale=1.0,
-            dn_labelbook_size=80,
+            dn_labelbook_size=9,
         ),
-        num_classes=80,
+        num_classes=8,
         in_channels=[384, 768, 1536],
         embed_dims=256,
         query_dim=4,

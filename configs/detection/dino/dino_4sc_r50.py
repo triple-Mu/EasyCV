@@ -66,7 +66,7 @@ model = dict(
             dn_box_noise_scale=1.0,
             dn_labelbook_size=80,
         ),
-        num_classes=80,
+        num_classes=8,
         in_channels=[512, 1024, 2048],
         embed_dims=256,
         query_dim=4,
